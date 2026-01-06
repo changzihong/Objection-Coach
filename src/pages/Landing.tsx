@@ -1,6 +1,7 @@
 import React from 'react';
 import { Link } from 'react-router-dom';
 import '../styles/landing.css';
+import kadoshLogo from './components/image/kadosh_ai_logo.jpeg';
 
 export default function Landing() {
     return (
