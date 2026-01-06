@@ -62,9 +62,29 @@ export default function Landing() {
                 </div>
             </section>
 
-            <footer style={{ padding: '4rem', textAlign: 'center', borderTop: '1px solid var(--slate-700)', color: 'var(--text-secondary)', fontSize: '0.8rem' }}>
-                &copy; 2026 OBJECTION COACH || KADOSH AI
-            </footer>
+            <footer style={{ 
+                  padding: '4rem', 
+                  textAlign: 'center', 
+                  borderTop: '1px solid var(--slate-700)', 
+                  color: 'var(--text-secondary)', 
+                  fontSize: '0.8rem',
+                  display: 'flex',
+                  alignItems: 'center',
+                  justifyContent: 'center',
+                  gap: '0.5rem'
+              }}>
+              &copy; 2026 OBJECTION COACH || 
+              <img 
+                  src={kadoshLogo} 
+                  alt="Kadosh AI Logo" 
+                  style={{ 
+                      height: '20px', 
+                      width: 'auto',
+                      verticalAlign: 'middle'
+                  }} 
+              />
+              KADOSH AI
+          </footer>
         </div>
     );
 }
