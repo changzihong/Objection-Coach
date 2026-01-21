@@ -82,7 +82,7 @@ export default function Landing() {
                       verticalAlign: 'middle'
                   }} 
               />
-              KADOSH AI
+              KadoshAI All rights reserved.
           </footer>
         </div>
     );
