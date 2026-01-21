@@ -6,6 +6,7 @@ import * as pdfjsLib from 'pdfjs-dist'
 import Sidebar from '../components/Sidebar'
 import ChatInterface from '../components/ChatInterface'
 import ConfirmModal from '../components/ConfirmModal'
+import Toast from '../components/Toast'
 import { jsPDF } from 'jspdf'
 import { ArrowLeft, Save, Trash2, FileText, Layout, MessageCircle, Play, CheckCircle2, Clock } from 'lucide-react'
 
@@ -52,6 +53,25 @@ export default function ObjectionDetail() {
   const [uploadError, setUploadError] = useState('')
   const [uploadStatus, setUploadStatus] = useState('')
   const fileInputRef = useRef<HTMLInputElement>(null)
+
+  // Toast State
+  const [toast, setToast] = useState<{
+    show: boolean
+    message: string
+    type: 'success' | 'error' | 'warning' | 'info'
+  }>({
+    show: false,
+    message: '',
+    type: 'info'
+  })
+
+  const showToast = (message: string, type: 'success' | 'error' | 'warning' | 'info') => {
+    setToast({ show: true, message, type })
+  }
+
+  const hideToast = () => {
+    setToast(prev => ({ ...prev, show: false }))
+  }
 
   // Modal State
   const [modalConfig, setModalConfig] = useState<{
@@ -264,7 +284,7 @@ export default function ObjectionDetail() {
     e.preventDefault()
 
     if (!formData.context_text || formData.context_text.trim() === '') {
-      alert('Supporting documents are required. Please upload a PDF or TXT file.')
+      showToast('Supporting documents are required. Please upload a PDF or TXT file.', 'warning')
       return
     }
 
@@ -282,8 +302,8 @@ export default function ObjectionDetail() {
         const newId = result.data?.[0]?.id;
         if (newId) navigate(`/objection/${newId}`, { replace: true })
         else navigate('/dashboard')
-      } else alert('Objection saved successfully.')
-    } catch (error: any) { alert('Error saving: ' + error.message) }
+      } else showToast('Objection saved successfully.', 'success')
+    } catch (error: any) { showToast('Error saving: ' + error.message, 'error') }
     finally { setLoading(false) }
   }
 
@@ -300,7 +320,7 @@ export default function ObjectionDetail() {
 
   const executeDelete = async () => {
     const { error } = await supabase.from('objections').delete().eq('id', id)
-    if (error) alert(error.message)
+    if (error) showToast(error.message, 'error')
     else navigate('/dashboard')
   }
 
@@ -539,6 +559,13 @@ export default function ObjectionDetail() {
         </div>
       </main>
       <ConfirmModal isOpen={modalConfig.isOpen} onClose={() => setModalConfig({ ...modalConfig, isOpen: false })} onConfirm={modalConfig.onConfirm} title={modalConfig.title} message={modalConfig.message} variant={modalConfig.variant} confirmText={modalConfig.confirmText} />
+      {toast.show && (
+        <Toast
+          message={toast.message}
+          type={toast.type}
+          onClose={hideToast}
+        />
+      )}
     </div>
   )
 }
