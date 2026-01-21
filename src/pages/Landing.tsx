@@ -8,7 +8,6 @@ export default function Landing() {
         <div className="landing-container">
             <nav className="landing-nav">
                 <div className="landing-logo">OBJECTION COACH</div>
-                <Link to="/login" className="premium-btn">Sign In</Link>
             </nav>
 
             <section className="hero-section">
@@ -18,7 +17,7 @@ export default function Landing() {
                         An intelligent advisor that analyzes your product, evaluates market competition, and crafts the perfect strategy to overcome any objection barrier.
                     </p>
                     <div className="hero-cta">
-                        <Link to="/signup" className="premium-btn" style={{ padding: '1rem 3rem' }}>Get Started</Link>
+                         <Link to="/login" className="premium-btn">Get Started -> </Link> 
                     </div>
                 </div>
             </section>
