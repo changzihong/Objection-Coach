@@ -91,9 +91,6 @@ export default function ChatInterface({
                 </div>
 
                 <div className="toolbar-actions">
-                    <button onClick={onDownloadPDF} className="toolbar-btn" title="Download as PDF">
-                        <Download size={14} /> PDF
-                    </button>
                     <button onClick={onClearChat} className="toolbar-btn clear" title="Clear History">
                         <Trash2 size={14} /> CLEAR
                     </button>
