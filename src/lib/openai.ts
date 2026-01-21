@@ -212,3 +212,52 @@ IMPORTANT: Under 100 words. Talk like a real Malaysian in business conversation.
 
     return completion.choices[0].message.content || 'Simulation error.';
 }
+
+export async function generateQuestionSuggestions(
+    objectionName: string,
+    productInfo: string,
+    contextText: string,
+    price: string,
+    type: 'purchase' | 'sell'
+): Promise<string[]> {
+    if (!openai) throw new Error("OpenAI API Key not configured");
+
+    const scenario = type === 'purchase'
+        ? 'sales coaching and objection handling'
+        : 'negotiation and vendor management';
+
+    const systemPrompt = `You are an expert ${scenario} advisor for the Malaysia market.
+
+Based on the objection details provided, suggest 4-5 different types of questions or conversation starters that would be valuable for the user to ask the AI coach.
+
+Return ONLY a JSON array of strings (question types/suggestions), no other text.
+Each suggestion should be 4-8 words max.
+Make them practical and specific to the situation.
+
+Example format:
+["What are common Malaysia objections?", "How to handle price concerns?", "Best follow-up tactics?"]`;
+
+    const userPrompt = `Objection: ${objectionName}
+Product: ${productInfo || 'Not specified'}
+Price: ${price || 'Not specified'}
+Context: ${contextText || 'No document'}
+Type: ${type}
+
+Generate question type suggestions for this situation.`;
+
+    const completion = await openai.chat.completions.create({
+        model: "gpt-4o-mini",
+        messages: [
+            { role: "system", content: systemPrompt },
+            { role: "user", content: userPrompt }
+        ],
+    });
+
+    try {
+        const content = completion.choices[0].message.content || '[]';
+        const suggestions = JSON.parse(content);
+        return Array.isArray(suggestions) ? suggestions : [];
+    } catch {
+        return [];
+    }
+}

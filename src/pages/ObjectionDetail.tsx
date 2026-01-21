@@ -1,7 +1,7 @@
 import { useState, useEffect, useRef } from 'react'
 import { useParams, useNavigate, Link } from 'react-router-dom'
 import { supabase } from '../lib/supabase'
-import { getPurchaseObjectionResponse, getSellObjectionResponse, getSimulationResponse, extractTextFromPDFWithAI } from '../lib/openai'
+import { getPurchaseObjectionResponse, getSellObjectionResponse, getSimulationResponse, extractTextFromPDFWithAI, generateQuestionSuggestions } from '../lib/openai'
 import * as pdfjsLib from 'pdfjs-dist'
 import Sidebar from '../components/Sidebar'
 import ChatInterface from '../components/ChatInterface'
@@ -52,6 +52,7 @@ export default function ObjectionDetail() {
   const [isUploading, setIsUploading] = useState(false)
   const [uploadError, setUploadError] = useState('')
   const [uploadStatus, setUploadStatus] = useState('')
+  const [suggestions, setSuggestions] = useState<string[]>([])
   const fileInputRef = useRef<HTMLInputElement>(null)
 
   // Toast State
@@ -133,12 +134,25 @@ export default function ObjectionDetail() {
     }
   }
 
-  const resetChat = (data: any) => {
+  const resetChat = async (data: any) => {
     const initialMessage: Message = {
       role: 'assistant',
       content: `Hello! I am your **Objection Coach**. I've analyzed your details for "${data.name || 'this project'}". \n\nHow can I guide you today? I can suggest responses, compare market benchmarks, or help you refine your value proposition.`
     }
     setMessages([initialMessage])
+
+    try {
+      const suggestions = await generateQuestionSuggestions(
+        data.name || '',
+        data.product_info || '',
+        data.context_text || '',
+        data.price || '',
+        data.type || 'purchase'
+      )
+      setSuggestions(suggestions)
+    } catch (error) {
+      console.error('Error generating suggestions:', error)
+    }
   }
 
   const resetSimulation = (data: any) => {
@@ -156,7 +170,10 @@ export default function ObjectionDetail() {
     const updatedMessages = [...currentMessages, userMsg]
 
     if (mode === 'simulation') setSimulationMessages(updatedMessages)
-    else setMessages(updatedMessages)
+    else {
+      setMessages(updatedMessages)
+      setSuggestions([])
+    }
 
     setIsTyping(true)
 
@@ -554,6 +571,7 @@ export default function ObjectionDetail() {
               onClearChat={triggerClearChat}
               onDownloadPDF={handleDownloadPDF}
               onToggleMode={(m) => setMode(m)}
+              suggestions={mode === 'coach' ? suggestions : []}
             />
           )}
         </div>

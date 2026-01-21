@@ -1,7 +1,7 @@
 import React, { useState, useRef, useEffect } from 'react'
 import ReactMarkdown from 'react-markdown'
 import remarkGfm from 'remark-gfm'
-import { Send, Download, Trash2, Cpu, User, Play, Info } from 'lucide-react'
+import { Send, Download, Trash2, Cpu, User, Play, Info, Lightbulb } from 'lucide-react'
 
 interface Message {
     role: 'assistant' | 'user' | 'system';
@@ -16,6 +16,7 @@ interface ChatInterfaceProps {
     isTyping: boolean;
     mode: 'coach' | 'simulation';
     onToggleMode?: (mode: 'coach' | 'simulation') => void;
+    suggestions?: string[];
 }
 
 export default function ChatInterface({
@@ -25,10 +26,15 @@ export default function ChatInterface({
     onDownloadPDF,
     isTyping,
     mode,
-    onToggleMode
+    onToggleMode,
+    suggestions = []
 }: ChatInterfaceProps) {
     const [inputValue, setInputValue] = useState('')
     const messagesEndRef = useRef<HTMLDivElement>(null)
+
+    const handleSuggestionClick = (suggestion: string) => {
+        onSendMessage(suggestion)
+    }
 
     const scrollToBottom = () => {
         messagesEndRef.current?.scrollIntoView({ behavior: "smooth" })
@@ -148,6 +154,27 @@ export default function ChatInterface({
                 )}
                 <div ref={messagesEndRef} />
             </div>
+
+            {messages.length === 0 && suggestions.length > 0 && (
+                <div className="suggestions-container">
+                    <div className="suggestions-header">
+                        <Lightbulb size={16} />
+                        <span>Try asking about...</span>
+                    </div>
+                    <div className="suggestions-grid">
+                        {suggestions.map((suggestion, idx) => (
+                            <button
+                                key={idx}
+                                className="suggestion-btn"
+                                onClick={() => handleSuggestionClick(suggestion)}
+                                type="button"
+                            >
+                                {suggestion}
+                            </button>
+                        ))}
+                    </div>
+                </div>
+            )}
 
             <form onSubmit={handleSubmit} className="chat-input-bar">
                 <textarea
