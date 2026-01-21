@@ -17,7 +17,7 @@ export default function Landing() {
                         An intelligent advisor that analyzes your product, evaluates market competition, and crafts the perfect strategy to overcome any objection barrier.
                     </p>
                     <div className="hero-cta">
-                        <Link to="/login" className="premium-btn">Get Started </Link>
+                        <Link to="/login" className="premium-btn">Get Started &xrarr;</Link>
                     </div>
                 </div>
             </section>
