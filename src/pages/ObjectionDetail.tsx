@@ -147,7 +147,8 @@ export default function ObjectionDetail() {
         data.product_info || '',
         data.context_text || '',
         data.price || '',
-        data.type || 'purchase'
+        data.type || 'purchase',
+        'coach'
       )
       setSuggestions(suggestions)
     } catch (error) {
@@ -155,13 +156,27 @@ export default function ObjectionDetail() {
     }
   }
 
-  const resetSimulation = (data: any) => {
+  const resetSimulation = async (data: any) => {
     const persona = data.type === 'purchase' ? 'Prospect' : 'Vendor'
     const initialMsg: Message = {
       role: 'assistant',
       content: `*Scenario Started: I am the ${persona}.*\n\n"Thanks for coming. Regarding "${data.name}", I have some serious concerns about this. Convince me why I should move forward."`
     }
     setSimulationMessages([initialMsg])
+
+    try {
+      const suggestions = await generateQuestionSuggestions(
+        data.name || '',
+        data.product_info || '',
+        data.context_text || '',
+        data.price || '',
+        data.type || 'purchase',
+        'simulation'
+      )
+      setSuggestions(suggestions)
+    } catch (error) {
+      console.error('Error generating simulation suggestions:', error)
+    }
   }
 
   const handleSendMessage = async (inputValue: string) => {
@@ -245,10 +260,10 @@ export default function ObjectionDetail() {
 
   const executeClearChat = async () => {
     if (mode === 'simulation') {
-      resetSimulation(formData)
+      await resetSimulation(formData)
       if (!isNew) await supabase.from('objections').update({ simulation_history: null }).eq('id', id)
     } else {
-      resetChat(formData)
+      await resetChat(formData)
       if (!isNew) await supabase.from('objections').update({ chat_history: null }).eq('id', id)
     }
     setModalConfig({ ...modalConfig, isOpen: false })
@@ -283,11 +298,11 @@ export default function ObjectionDetail() {
 
     targetMessages.forEach((msg) => {
       const isAI = msg.role === 'assistant'
-      doc.setFont(undefined, 'bold')
+      doc.setFont('helvetica', 'bold')
       doc.setTextColor(isAI ? 197 : 50, isAI ? 160 : 50, isAI ? 89 : 50)
       doc.text(isAI ? 'COACH/PERSONA:' : 'USER:', 20, yPos)
       yPos += 7
-      doc.setFont(undefined, 'normal')
+      doc.setFont('helvetica', 'normal')
       doc.setTextColor(60, 60, 60)
       const splitText = doc.splitTextToSize(msg.content.replace(/\*\*/g, '').replace(/\*/g, ''), 170)
       if (yPos + (splitText.length * 7) > 280) { doc.addPage(); yPos = 20; }
@@ -313,7 +328,7 @@ export default function ObjectionDetail() {
       const payload = { ...cleanFormData, user_id: session.user.id }
       let result
       if (isNew) result = await supabase.from('objections').insert([payload]).select()
-      else result = await supabase.from('objections').update(payload).eq('id', id).select()
+      else result = await supabase.from('objections').update(payload).eq('id', id!).select()
       if (result.error) throw result.error
       if (isNew) {
         const newId = result.data?.[0]?.id;
@@ -336,7 +351,7 @@ export default function ObjectionDetail() {
   }
 
   const executeDelete = async () => {
-    const { error } = await supabase.from('objections').delete().eq('id', id)
+    const { error } = await supabase.from('objections').delete().eq('id', id!)
     if (error) showToast(error.message, 'error')
     else navigate('/dashboard')
   }
@@ -506,8 +521,8 @@ export default function ObjectionDetail() {
                       {isUploading
                         ? 'Processing file...'
                         : fileName
-                        ? `File: ${fileName}`
-                        : 'Upload PDF or TXT guides (Required)'}
+                          ? `File: ${fileName}`
+                          : 'Upload PDF or TXT guides (Required)'}
                     </span>
                     <input
                       ref={fileInputRef}
@@ -570,8 +585,27 @@ export default function ObjectionDetail() {
               onSendMessage={handleSendMessage}
               onClearChat={triggerClearChat}
               onDownloadPDF={handleDownloadPDF}
-              onToggleMode={(m) => setMode(m)}
-              suggestions={mode === 'coach' ? suggestions : []}
+              onToggleMode={async (m) => {
+                setMode(m)
+                // Refresh suggestions for the target mode if it's currently at the initial message
+                const targetMessages = m === 'simulation' ? simulationMessages : messages
+                if (targetMessages.length <= 1) {
+                  try {
+                    const newSuggestions = await generateQuestionSuggestions(
+                      formData.name || '',
+                      formData.product_info || '',
+                      formData.context_text || '',
+                      formData.price || '',
+                      formData.type as 'purchase' | 'sell',
+                      m
+                    )
+                    setSuggestions(newSuggestions)
+                  } catch (err) {
+                    console.error('Error refreshing suggestions on mode switch:', err)
+                  }
+                }
+              }}
+              suggestions={suggestions}
             />
           )}
         </div>
