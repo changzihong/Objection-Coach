@@ -36,13 +36,7 @@ export default function Sidebar() {
                     <LayoutDashboard size={18} />
                     <span>DASHBOARD</span>
                 </Link>
-                <Link
-                    to="/objection/new"
-                    className={`nav-item ${isActive('/objection/new')}`}
-                >
-                    <PlusSquare size={18} />
-                    <span>NEW OBJECTION</span>
-                </Link>
+                
                 <Link
                     to="/settings"
                     className={`nav-item ${isActive('/settings')}`}
