@@ -1,6 +1,7 @@
 import React from 'react';
 import { Link } from 'react-router-dom';
 import '../styles/landing.css';
+import { ArrowRight } from 'lucide-react';
 import kadoshLogo from "../components/image/kadosh_ai_logo.jpeg";
 
 export default function Landing() {
@@ -17,9 +18,7 @@ export default function Landing() {
                         An intelligent advisor that analyzes your product, evaluates market competition, and crafts the perfect strategy to overcome any objection barrier.
                     </p>
                     <div className="hero-cta">
-                        <Link to="/login" className="premium-btn">Get Started</Link> <span className="inline-block transition-transform duration-300 group-hover:translate-x-2 ml-2">
-      &rarr;
-    </span>
+                        <Link to="/login" className="premium-btn">Get Started</Link> 
                     </div>
                 </div>
             </section>
