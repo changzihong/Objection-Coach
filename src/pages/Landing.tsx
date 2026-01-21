@@ -65,7 +65,7 @@ export default function Landing() {
                   padding: '4rem', 
                   textAlign: 'center', 
                   borderTop: '1px solid var(--slate-700)', 
-                  color: 'var(--text-secondary)', 
+                  color: 'grey', 
                   fontSize: '0.8rem',
                   display: 'flex',
                   alignItems: 'center',
