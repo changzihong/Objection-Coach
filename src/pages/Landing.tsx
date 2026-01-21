@@ -72,7 +72,7 @@ export default function Landing() {
                   justifyContent: 'center',
                   gap: '0.5rem'
               }}>
-              &copy; 2026 OBJECTION COACH || 
+              Copyright ©️ 2026 
               <img 
                   src={kadoshLogo} 
                   alt="Kadosh AI Logo" 
