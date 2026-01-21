@@ -1,4 +1,4 @@
-import { useState, useEffect } from 'react'
+import { useState, useEffect, useRef } from 'react'
 import { useParams, useNavigate, Link } from 'react-router-dom'
 import { supabase } from '../lib/supabase'
 import { getPurchaseObjectionResponse, getSellObjectionResponse, getSimulationResponse } from '../lib/openai'
@@ -9,11 +9,16 @@ import ConfirmModal from '../components/ConfirmModal'
 import { jsPDF } from 'jspdf'
 import { ArrowLeft, Save, Trash2, FileText, Layout, MessageCircle, Play, CheckCircle2, Clock } from 'lucide-react'
 
-// Set worker source for PDF.js - use local worker from node_modules
-pdfjsLib.GlobalWorkerOptions.workerSrc = new URL(
-  'pdfjs-dist/build/pdf.worker.min.mjs',
-  import.meta.url
-).toString()
+// Set worker source for PDF.js with fallback support
+try {
+  pdfjsLib.GlobalWorkerOptions.workerSrc = new URL(
+    'pdfjs-dist/build/pdf.worker.min.mjs',
+    import.meta.url
+  ).toString()
+} catch (err) {
+  console.warn('Failed to set local PDF worker, using CDN fallback')
+  pdfjsLib.GlobalWorkerOptions.workerSrc = `https://cdn.jsdelivr.net/npm/pdfjs-dist@${pdfjsLib.version}/build/pdf.worker.min.mjs`
+}
 import '../styles/layout.css'
 import '../styles/coach.css'
 
@@ -43,6 +48,9 @@ export default function ObjectionDetail() {
   const [simulationMessages, setSimulationMessages] = useState<Message[]>([])
   const [isTyping, setIsTyping] = useState(false)
   const [fileName, setFileName] = useState('')
+  const [isUploading, setIsUploading] = useState(false)
+  const [uploadError, setUploadError] = useState('')
+  const fileInputRef = useRef<HTMLInputElement>(null)
 
   // Modal State
   const [modalConfig, setModalConfig] = useState<{
@@ -298,22 +306,59 @@ export default function ObjectionDetail() {
   const handleFileUpload = async (e: any) => {
     const file = e.target.files[0]
     if (!file) return;
-    setFileName(file.name);
-    let text = '';
-    if (file.type === 'application/pdf') {
-      try {
-        const arrayBuffer = await file.arrayBuffer();
-        const pdf = await pdfjsLib.getDocument({ data: arrayBuffer }).promise;
-        let fullText = '';
-        for (let i = 1; i <= pdf.numPages; i++) {
-          const page = await pdf.getPage(i);
-          const textContent = await page.getTextContent();
-          fullText += textContent.items.map((item: any) => item.str || '').join(' ') + '\n';
+
+    setIsUploading(true)
+    setUploadError('')
+    setFileName(file.name)
+
+    try {
+      let text = '';
+
+      if (file.type === 'application/pdf') {
+        console.log('Processing PDF file:', file.name)
+        try {
+          const arrayBuffer = await file.arrayBuffer()
+          console.log('PDF arrayBuffer loaded, size:', arrayBuffer.byteLength)
+
+          const loadingTask = pdfjsLib.getDocument({ data: arrayBuffer })
+          const pdf = await loadingTask.promise
+          console.log('PDF loaded, pages:', pdf.numPages)
+
+          let fullText = ''
+          for (let i = 1; i <= pdf.numPages; i++) {
+            const page = await pdf.getPage(i)
+            const textContent = await page.getTextContent()
+            const pageText = textContent.items.map((item: any) => item.str || '').join(' ')
+            fullText += pageText + '\n'
+          }
+          text = fullText.trim()
+          console.log('PDF text extracted, length:', text.length)
+        } catch (pdfError: any) {
+          console.error('PDF parsing error:', pdfError)
+          setUploadError(`PDF Error: ${pdfError.message}`)
+          if (fileInputRef.current) fileInputRef.current.value = ''
+          setIsUploading(false)
+          return
         }
-        text = fullText;
-      } catch (err: any) { alert('Error parsing document: ' + err.message); }
-    } else text = await file.text();
-    if (text) setFormData(prev => ({ ...prev, context_text: text }));
+      } else {
+        console.log('Processing text file:', file.name)
+        text = await file.text()
+        console.log('Text file loaded, length:', text.length)
+      }
+
+      if (text && text.trim().length > 0) {
+        setFormData(prev => ({ ...prev, context_text: text }))
+        setUploadError('')
+        console.log('Document uploaded successfully')
+      } else {
+        setUploadError('The document appears to be empty or could not be read.')
+      }
+    } catch (err: any) {
+      console.error('File upload error:', err)
+      setUploadError(`Upload failed: ${err.message}`)
+    } finally {
+      setIsUploading(false)
+    }
   }
 
   return (
@@ -394,13 +439,43 @@ export default function ObjectionDetail() {
                 <div className="file-upload-wrapper">
                   <label className="file-upload-label">
                     <Layout size={24} style={{ marginBottom: '0.5rem', opacity: 0.5 }} />
-                    <span>{fileName ? `File: ${fileName}` : 'Upload PDF or TXT guides (Required)'}</span>
-                    <input type="file" className="file-upload-input" accept=".txt,.pdf" onChange={handleFileUpload} />
+                    <span>
+                      {isUploading
+                        ? 'Processing file...'
+                        : fileName
+                        ? `File: ${fileName}`
+                        : 'Upload PDF or TXT guides (Required)'}
+                    </span>
+                    <input
+                      ref={fileInputRef}
+                      type="file"
+                      className="file-upload-input"
+                      accept=".txt,.pdf"
+                      onChange={handleFileUpload}
+                      disabled={isUploading}
+                    />
                   </label>
                 </div>
-                {formData.context_text && (
+                {isUploading && (
+                  <p style={{ fontSize: '0.85rem', color: '#c5a059', marginTop: '0.5rem' }}>
+                    Uploading and processing document...
+                  </p>
+                )}
+                {uploadError && (
+                  <div style={{ marginTop: '0.5rem' }}>
+                    <p style={{ fontSize: '0.85rem', color: '#f44336', marginBottom: '0.25rem' }}>
+                      {uploadError}
+                    </p>
+                    {uploadError.includes('PDF') && (
+                      <p style={{ fontSize: '0.75rem', color: '#888', marginTop: '0.25rem' }}>
+                        Tip: If PDF upload fails, try converting your document to TXT format first.
+                      </p>
+                    )}
+                  </div>
+                )}
+                {!isUploading && !uploadError && formData.context_text && (
                   <p style={{ fontSize: '0.85rem', color: '#4caf50', marginTop: '0.5rem' }}>
-                    Document uploaded successfully
+                    ✓ Document uploaded successfully ({formData.context_text.length} characters)
                   </p>
                 )}
               </div>
