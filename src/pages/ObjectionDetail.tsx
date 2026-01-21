@@ -1,7 +1,7 @@
 import { useState, useEffect, useRef } from 'react'
 import { useParams, useNavigate, Link } from 'react-router-dom'
 import { supabase } from '../lib/supabase'
-import { getPurchaseObjectionResponse, getSellObjectionResponse, getSimulationResponse } from '../lib/openai'
+import { getPurchaseObjectionResponse, getSellObjectionResponse, getSimulationResponse, extractTextFromPDFWithAI } from '../lib/openai'
 import * as pdfjsLib from 'pdfjs-dist'
 import Sidebar from '../components/Sidebar'
 import ChatInterface from '../components/ChatInterface'
@@ -50,6 +50,7 @@ export default function ObjectionDetail() {
   const [fileName, setFileName] = useState('')
   const [isUploading, setIsUploading] = useState(false)
   const [uploadError, setUploadError] = useState('')
+  const [uploadStatus, setUploadStatus] = useState('')
   const fileInputRef = useRef<HTMLInputElement>(null)
 
   // Modal State
@@ -309,6 +310,7 @@ export default function ObjectionDetail() {
 
     setIsUploading(true)
     setUploadError('')
+    setUploadStatus('')
     setFileName(file.name)
 
     try {
@@ -316,6 +318,8 @@ export default function ObjectionDetail() {
 
       if (file.type === 'application/pdf') {
         console.log('Processing PDF file:', file.name)
+        setUploadStatus('Loading PDF...')
+
         try {
           const arrayBuffer = await file.arrayBuffer()
           console.log('PDF arrayBuffer loaded, size:', arrayBuffer.byteLength)
@@ -324,6 +328,7 @@ export default function ObjectionDetail() {
           const pdf = await loadingTask.promise
           console.log('PDF loaded, pages:', pdf.numPages)
 
+          setUploadStatus('Extracting text from PDF...')
           let fullText = ''
           for (let i = 1; i <= pdf.numPages; i++) {
             const page = await pdf.getPage(i)
@@ -333,15 +338,33 @@ export default function ObjectionDetail() {
           }
           text = fullText.trim()
           console.log('PDF text extracted, length:', text.length)
+
+          if (text.length < 50) {
+            console.log('PDF appears to be image-based or has minimal text. Using AI Vision...')
+            setUploadStatus('Document appears to be an image. Using AI Vision to read content...')
+            try {
+              text = await extractTextFromPDFWithAI(pdf)
+              console.log('AI Vision extraction complete, length:', text.length)
+            } catch (aiError: any) {
+              console.error('AI Vision extraction error:', aiError)
+              setUploadError(`AI Vision Error: ${aiError.message}`)
+              if (fileInputRef.current) fileInputRef.current.value = ''
+              setIsUploading(false)
+              setUploadStatus('')
+              return
+            }
+          }
         } catch (pdfError: any) {
           console.error('PDF parsing error:', pdfError)
           setUploadError(`PDF Error: ${pdfError.message}`)
           if (fileInputRef.current) fileInputRef.current.value = ''
           setIsUploading(false)
+          setUploadStatus('')
           return
         }
       } else {
         console.log('Processing text file:', file.name)
+        setUploadStatus('Reading text file...')
         text = await file.text()
         console.log('Text file loaded, length:', text.length)
       }
@@ -349,13 +372,16 @@ export default function ObjectionDetail() {
       if (text && text.trim().length > 0) {
         setFormData(prev => ({ ...prev, context_text: text }))
         setUploadError('')
+        setUploadStatus('')
         console.log('Document uploaded successfully')
       } else {
         setUploadError('The document appears to be empty or could not be read.')
+        setUploadStatus('')
       }
     } catch (err: any) {
       console.error('File upload error:', err)
       setUploadError(`Upload failed: ${err.message}`)
+      setUploadStatus('')
     } finally {
       setIsUploading(false)
     }
@@ -458,7 +484,7 @@ export default function ObjectionDetail() {
                 </div>
                 {isUploading && (
                   <p style={{ fontSize: '0.85rem', color: '#c5a059', marginTop: '0.5rem' }}>
-                    Uploading and processing document...
+                    {uploadStatus || 'Uploading and processing document...'}
                   </p>
                 )}
                 {uploadError && (
@@ -476,6 +502,11 @@ export default function ObjectionDetail() {
                 {!isUploading && !uploadError && formData.context_text && (
                   <p style={{ fontSize: '0.85rem', color: '#4caf50', marginTop: '0.5rem' }}>
                     ✓ Document uploaded successfully ({formData.context_text.length} characters)
+                    {formData.context_text.includes('--- Page') && (
+                      <span style={{ marginLeft: '0.5rem', fontSize: '0.75rem', opacity: 0.8 }}>
+                        (Extracted using AI Vision)
+                      </span>
+                    )}
                   </p>
                 )}
               </div>

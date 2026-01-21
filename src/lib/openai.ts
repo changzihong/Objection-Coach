@@ -7,11 +7,71 @@ try {
     if (apiKey) {
         openai = new OpenAI({
             apiKey: apiKey,
-            dangerouslyAllowBrowser: true // Required for client-side usage in Vite
+            dangerouslyAllowBrowser: true
         });
     }
 } catch (error) {
     console.error("Error initializing OpenAI client:", error);
+}
+
+export async function extractTextFromPDFWithAI(pdfDoc: any): Promise<string> {
+    if (!openai) throw new Error("OpenAI API Key not configured");
+
+    console.log('Using AI Vision to extract text from PDF pages...')
+    let fullText = ''
+
+    for (let pageNum = 1; pageNum <= Math.min(pdfDoc.numPages, 10); pageNum++) {
+        try {
+            const page = await pdfDoc.getPage(pageNum)
+            const viewport = page.getViewport({ scale: 2.0 })
+
+            const canvas = document.createElement('canvas')
+            const context = canvas.getContext('2d')
+            canvas.height = viewport.height
+            canvas.width = viewport.width
+
+            await page.render({
+                canvasContext: context,
+                viewport: viewport
+            }).promise
+
+            const imageData = canvas.toDataURL('image/png')
+
+            console.log(`Analyzing page ${pageNum} with AI Vision...`)
+
+            const response = await openai.chat.completions.create({
+                model: "gpt-4o-mini",
+                messages: [
+                    {
+                        role: "user",
+                        content: [
+                            {
+                                type: "text",
+                                text: "Extract all text from this image. Return ONLY the text content, no explanations or formatting. If there's no text, return 'No text found'."
+                            },
+                            {
+                                type: "image_url",
+                                image_url: {
+                                    url: imageData
+                                }
+                            }
+                        ]
+                    }
+                ],
+                max_tokens: 1000
+            })
+
+            const pageText = response.choices[0].message.content || ''
+            if (pageText && !pageText.includes('No text found')) {
+                fullText += `\n--- Page ${pageNum} ---\n${pageText}\n`
+            }
+
+        } catch (err) {
+            console.error(`Error processing page ${pageNum}:`, err)
+        }
+    }
+
+    return fullText.trim()
 }
 
 interface ChatMessage {
