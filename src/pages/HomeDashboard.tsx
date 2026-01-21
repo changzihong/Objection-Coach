@@ -103,25 +103,6 @@ export default function HomeDashboard() {
                             <h1 className="luxury-text" style={{ fontSize: '2.8rem', marginBottom: '0.8rem' }}>Coach Dashboard</h1>
                             <p className="subtitle">Real-time metrics and comprehensive objection library.</p>
                         </div>
-                        <div className="header-actions">
-                            {filterType && (
-                                <button className="clear-filter-btn" onClick={clearFilter}>
-                                    <X size={14} /> Clear Filter
-                                </button>
-                            )}
-                            <div className="search-bar glass">
-                                <Search size={16} />
-                                <input
-                                    type="text"
-                                    placeholder="Search objections..."
-                                    value={searchQuery}
-                                    onChange={(e) => setSearchQuery(e.target.value)}
-                                />
-                            </div>
-                            <Link to="/objection/new" className="premium-btn new-project-btn">
-                                <Plus size={16} /> NEW OBJECTION
-                            </Link>
-                        </div>
                     </header>
 
                     {loading ? (
@@ -194,7 +175,28 @@ export default function HomeDashboard() {
                             </div>
 
                             <div className="library-section">
-                                <h2 className="library-title">Strategic Library</h2>
+                                <div className="library-header">
+                                    <h2 className="library-title">Strategic Library</h2>
+                                    <div className="library-actions">
+                                        {filterType && (
+                                            <button className="icon-btn" onClick={clearFilter} title="Clear Filter">
+                                                <X size={18} />
+                                            </button>
+                                        )}
+                                        <div className="search-bar glass">
+                                            <Search size={16} />
+                                            <input
+                                                type="text"
+                                                placeholder="Search objections..."
+                                                value={searchQuery}
+                                                onChange={(e) => setSearchQuery(e.target.value)}
+                                            />
+                                        </div>
+                                        <Link to="/objection/new" className="icon-btn" title="New Objection">
+                                            <Plus size={18} />
+                                        </Link>
+                                    </div>
+                                </div>
                                 {/* Objections Library */}
                             {filteredObjections.length === 0 ? (
                                 <div className="empty-state glass">
