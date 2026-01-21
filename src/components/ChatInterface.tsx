@@ -155,7 +155,7 @@ export default function ChatInterface({
                 <div ref={messagesEndRef} />
             </div>
 
-            {messages.length === 0 && suggestions.length > 0 && (
+            {messages.length <= 1 && suggestions.length > 0 && (
                 <div className="suggestions-container">
                     <div className="suggestions-header">
                         <Lightbulb size={16} />
