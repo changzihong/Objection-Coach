@@ -218,7 +218,8 @@ export async function generateQuestionSuggestions(
     productInfo: string,
     contextText: string,
     price: string,
-    type: 'purchase' | 'sell'
+    type: 'purchase' | 'sell',
+    mode: 'coach' | 'simulation' = 'coach'
 ): Promise<string[]> {
     if (!openai) throw new Error("OpenAI API Key not configured");
 
@@ -226,24 +227,29 @@ export async function generateQuestionSuggestions(
         ? 'sales coaching and objection handling'
         : 'negotiation and vendor management';
 
+    const modeInstructions = mode === 'simulation'
+        ? `suggest 4-5 different ways the user could RESPOND to the persona's challenge. These should be short rebuttals or opening lines to use in the simulation.`
+        : `suggest 4-5 different types of questions or conversation starters that would be valuable for the user to ask the AI coach.`;
+
     const systemPrompt = `You are an expert ${scenario} advisor for the Malaysia market.
+    
+    Based on the objection details provided, ${modeInstructions}
 
-Based on the objection details provided, suggest 4-5 different types of questions or conversation starters that would be valuable for the user to ask the AI coach.
+    Return ONLY a JSON array of strings, no other text.
+    Each suggestion should be 4-8 words max.
+    Make them practical and specific to the situation.
 
-Return ONLY a JSON array of strings (question types/suggestions), no other text.
-Each suggestion should be 4-8 words max.
-Make them practical and specific to the situation.
-
-Example format:
-["What are common Malaysia objections?", "How to handle price concerns?", "Best follow-up tactics?"]`;
+    Example format:
+    ["What are common Malaysia objections?", "How to handle price concerns?", "Best follow-up tactics?"]`;
 
     const userPrompt = `Objection: ${objectionName}
 Product: ${productInfo || 'Not specified'}
 Price: ${price || 'Not specified'}
 Context: ${contextText || 'No document'}
 Type: ${type}
+Mode: ${mode === 'simulation' ? 'Simulation (Talking to Persona)' : 'Coaching (Talking to Advisor)'}
 
-Generate question type suggestions for this situation.`;
+Generate ${mode === 'simulation' ? 'response' : 'question'} type suggestions for this ${mode} situation.`;
 
     const completion = await openai.chat.completions.create({
         model: "gpt-4o-mini",
@@ -255,9 +261,18 @@ Generate question type suggestions for this situation.`;
 
     try {
         const content = completion.choices[0].message.content || '[]';
-        const suggestions = JSON.parse(content);
+        // Clean up JSON if it contains markdown blocks
+        const jsonContent = content.includes('```json')
+            ? content.split('```json')[1].split('```')[0].trim()
+            : content.includes('```')
+                ? content.split('```')[1].split('```')[0].trim()
+                : content.trim();
+
+        const suggestions = JSON.parse(jsonContent);
         return Array.isArray(suggestions) ? suggestions : [];
-    } catch {
+    } catch (error) {
+        console.error("Error parsing suggestions:", error);
         return [];
     }
 }
+
