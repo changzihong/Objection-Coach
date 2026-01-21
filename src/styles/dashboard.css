@@ -71,6 +71,27 @@
     gap: 0.8rem;
 }
 
+.clear-filter-btn {
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
+    padding: 0.6rem 1.2rem;
+    background: rgba(255, 255, 255, 0.05);
+    border: 1px solid var(--glass-border);
+    border-radius: 8px;
+    color: var(--text-secondary);
+    font-size: 0.75rem;
+    font-weight: 600;
+    cursor: pointer;
+    transition: all 0.2s;
+}
+
+.clear-filter-btn:hover {
+    background: rgba(255, 255, 255, 0.08);
+    color: white;
+    border-color: var(--gold);
+}
+
 /* Metrics Layout */
 .metrics-layout {
     display: flex;

@@ -1,7 +1,7 @@
 import { Link, useLocation } from 'react-router-dom'
 import { supabase } from '../lib/supabase'
 import { useEffect, useState } from 'react'
-import { LayoutDashboard, Library, PlusSquare, Settings, LogOut, User } from 'lucide-react'
+import { LayoutDashboard, PlusSquare, Settings, LogOut, User } from 'lucide-react'
 
 export default function Sidebar() {
     const location = useLocation()
@@ -35,13 +35,6 @@ export default function Sidebar() {
                 >
                     <LayoutDashboard size={18} />
                     <span>DASHBOARD</span>
-                </Link>
-                <Link
-                    to="/library"
-                    className={`nav-item ${isActive('/library')}`}
-                >
-                    <Library size={18} />
-                    <span>STRATEGIC LIBRARY</span>
                 </Link>
                 <Link
                     to="/objection/new"

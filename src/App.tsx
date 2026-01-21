@@ -4,7 +4,6 @@ import Signup from './pages/Signup'
 import Landing from './pages/Landing'
 import AuthGuard from './components/AuthGuard'
 import HomeDashboard from './pages/HomeDashboard'
-import Library from './pages/Library'
 import ObjectionDetail from './pages/ObjectionDetail'
 import ForgotPassword from './pages/ForgotPassword'
 import PrivacyPolicy from './pages/PrivacyPolicy'
@@ -27,11 +26,7 @@ function App() {
           </AuthGuard>
         } />
 
-        <Route path="/library" element={
-          <AuthGuard>
-            <Library />
-          </AuthGuard>
-        } />
+        <Route path="/library" element={<Navigate to="/dashboard" replace />} />
 
         <Route path="/objection/:id" element={
           <AuthGuard>
