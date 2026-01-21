@@ -179,7 +179,7 @@ export default function HomeDashboard() {
                                     <h2 className="library-title">Strategic Library</h2>
                                     <div className="library-actions">
                                         {filterType && (
-                                            <button className="icon-btn" onClick={clearFilter} title="Clear Filter">
+                                            <button className="icon-btn" onClick={clearFilter} data-tooltip="Clear Filter">
                                                 <X size={18} />
                                             </button>
                                         )}
@@ -192,7 +192,7 @@ export default function HomeDashboard() {
                                                 onChange={(e) => setSearchQuery(e.target.value)}
                                             />
                                         </div>
-                                        <Link to="/objection/new" className="icon-btn" title="New Objection">
+                                        <Link to="/objection/new" className="icon-btn" data-tooltip="New Objection">
                                             <Plus size={18} />
                                         </Link>
                                     </div>
