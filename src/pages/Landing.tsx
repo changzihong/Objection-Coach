@@ -17,7 +17,7 @@ export default function Landing() {
                         An intelligent advisor that analyzes your product, evaluates market competition, and crafts the perfect strategy to overcome any objection barrier.
                     </p>
                     <div className="hero-cta">
-                         <Link to="/login" className="premium-btn">Get Started </Link> 
+                        <Link to="/login" className="premium-btn">Get Started </Link>
                     </div>
                 </div>
             </section>
@@ -61,29 +61,30 @@ export default function Landing() {
                 </div>
             </section>
 
-            <footer style={{ 
-                  padding: '4rem', 
-                  textAlign: 'center', 
-                  borderTop: '1px solid var(--slate-700)', 
-                  color: 'grey', 
-                  fontSize: '0.8rem',
-                  display: 'flex',
-                  alignItems: 'center',
-                  justifyContent: 'center',
-                  gap: '0.5rem'
-              }}>
-              Copyright ©️ 2026 
-              <img 
-                  src={kadoshLogo} 
-                  alt="Kadosh AI Logo" 
-                  style={{ 
-                      height: '20px', 
-                      width: 'auto',
-                      verticalAlign: 'middle'
-                  }} 
-              />
-              KadoshAI All rights reserved.
-          </footer>
+            <footer style={{
+                padding: '4rem',
+                textAlign: 'center',
+                borderTop: '1px solid var(--slate-700)',
+                backgroundColor: '#1a1a1e',
+                color: '#a1a1a6',
+                fontSize: '0.8rem',
+                display: 'flex',
+                alignItems: 'center',
+                justifyContent: 'center',
+                gap: '0.5rem'
+            }}>
+                Copyright ©️ 2026
+                <img
+                    src={kadoshLogo}
+                    alt="Kadosh AI Logo"
+                    style={{
+                        height: '20px',
+                        width: 'auto',
+                        verticalAlign: 'middle'
+                    }}
+                />
+                KadoshAI All rights reserved.
+            </footer>
         </div>
     );
 }
