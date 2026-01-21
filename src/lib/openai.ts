@@ -23,6 +23,7 @@ export async function getPurchaseObjectionResponse(
     product: string,
     objection: string,
     context_text: string,
+    price: string,
     context: ChatMessage[] = []
 ): Promise<string> {
     if (!openai) throw new Error("OpenAI API Key not configured");
@@ -31,16 +32,18 @@ export async function getPurchaseObjectionResponse(
 Your goal is to guide the user (an admin) on how to handle specific sales barriers for their product/service.
 
 Project Details:
-Product/Service: ${product}
-Objection to overcome: ${objection}
-Knowledge Base: ${context_text || 'No specific document provided'}
+- Objection Title: ${objection}
+- Product/Service Specifications: ${product || 'Not specified'}
+- Price/Budget: ${price || 'Not specified'}
+- Supporting Documents Context: ${context_text || 'No specific document provided'}
 
 Strategy Guidelines:
-1. Analyze the objection and provide a professional, persuasive strategy.
-2. Suggest at least 2 specific rebuttals or responses.
-3. Provide a market comparison perspective (e.g., "Compared to industry benchmarks, your value here is...") or mention how other websites might handle this.
-4. Keep the tone professional, encouraging, and authoritative.
-5. If the user asks for a comparison, suggest key competitors or websites they should check to validate their market position.
+1. Carefully read ALL the information above, especially the supporting documents context which contains critical details.
+2. Analyze the objection and provide a professional, persuasive strategy based on the actual product specifications and price point.
+3. Suggest at least 2 specific rebuttals or responses that reference the supporting documents when relevant.
+4. Provide a market comparison perspective (e.g., "Compared to industry benchmarks, your value here is...") or mention how other websites might handle this.
+5. Keep the tone professional, encouraging, and authoritative.
+6. If the user asks for a comparison, suggest key competitors or websites they should check to validate their market position.
 
 Respond directly and helpfuly.
 IMPORTANT: Keep your response concise and try not to exceed 200 words. Use clear, professional formatting.`;
@@ -51,7 +54,7 @@ IMPORTANT: Keep your response concise and try not to exceed 200 words. Use clear
     ];
 
     const completion = await openai.chat.completions.create({
-        model: "gpt-4o-mini", // Use mini for cost effectiveness and speed
+        model: "gpt-4o-mini",
         messages: messages,
     });
 
@@ -62,6 +65,7 @@ export async function getSellObjectionResponse(
     product: string,
     objection: string,
     context_text: string,
+    price: string,
     context: ChatMessage[] = []
 ): Promise<string> {
     if (!openai) throw new Error("OpenAI API Key not configured");
@@ -70,14 +74,17 @@ export async function getSellObjectionResponse(
 The user is facing a negotiation challenge (inbound or buy-side).
 
 Project Details:
-Context: ${product}
-Negotiation Point: ${objection}
-Supporting Docs: ${context_text || 'None'}
+- Objection Title: ${objection}
+- Product/Service Specifications: ${product || 'Not specified'}
+- Price/Budget: ${price || 'Not specified'}
+- Supporting Documents Context: ${context_text || 'No specific document provided'}
 
 Goal:
-Suggest 3 high-impact qualifying questions or strategic responses to navigate this negotiation.
-Include a comparative insight (e.g., "Other market leaders typically...") or suggest a website link for price/market validation.
-Format clearly with numbered points.
+1. Carefully read ALL the information above, especially the supporting documents context which contains critical details.
+2. Suggest 3 high-impact qualifying questions or strategic responses to navigate this negotiation based on the actual context.
+3. Include a comparative insight (e.g., "Other market leaders typically...") or suggest a website link for price/market validation.
+4. Reference specific details from the supporting documents when making recommendations.
+5. Format clearly with numbered points.
 IMPORTANT: Keep your response concise and try not to exceed 200 words. Use clear, professional formatting.`;
 
     const messages: ChatMessage[] = [
@@ -97,6 +104,7 @@ export async function getSimulationResponse(
     product: string,
     objection: string,
     context_text: string,
+    price: string,
     type: 'purchase' | 'sell',
     chatContext: ChatMessage[] = []
 ): Promise<string> {
@@ -104,24 +112,29 @@ export async function getSimulationResponse(
 
     const persona = type === 'purchase' ? 'Prospect (Buyer)' : 'Vendor (Seller)';
     const scenario = type === 'purchase'
-        ? `I am a difficult Prospect who is considering your product "${product}" but has the following objection: "${objection}". I will push back, ask hard questions, and evaluate your responses as if I am actually buying.`
-        : `I am a Vendor/Supplier selling you "${product}". You are trying to negotiate "${objection}". I will stand firm on my value, offer counter-proposals, and act professionally but strictly as a seller.`;
+        ? `I am a difficult Prospect who is considering your product but has the following objection: "${objection}". I will push back, ask hard questions, and evaluate your responses as if I am actually buying.`
+        : `I am a Vendor/Supplier selling you a product/service. You are trying to negotiate "${objection}". I will stand firm on my value, offer counter-proposals, and act professionally but strictly as a seller.`;
 
     const systemPrompt = `SCENARIO SIMULATION MODE:
 You are acting as a: ${persona}
-Context: ${product}
-Project/Objection: ${objection}
-Knowledge Base: ${context_text || 'No specific document provided'}
+
+Project Details (READ CAREFULLY):
+- Objection Title: ${objection}
+- Product/Service Specifications: ${product || 'Not specified'}
+- Price/Budget: ${price || 'Not specified'}
+- Supporting Documents Context: ${context_text || 'No specific document provided'}
 
 TASK:
 ${scenario}
 
 GUIDELINES:
 1. Stay IN CHARACTER at all times. Do not break persona.
-2. If the user makes a good point, acknowledge it but don't give in too easily.
-3. Be realistic. If the product info suggests a flaw, use it.
-4. Keep responses punchy and conversational.
-5. IMPORTANT: Keep your response concise (under 150 words).`;
+2. Use the supporting documents context to inform your responses and objections - reference specific details when relevant.
+3. Consider the price point and product specifications when making arguments.
+4. If the user makes a good point, acknowledge it but don't give in too easily.
+5. Be realistic. If the product info or context suggests a flaw, use it in your objections.
+6. Keep responses punchy and conversational.
+7. IMPORTANT: Keep your response concise (under 150 words).`;
 
     const messages: ChatMessage[] = [
         { role: "system", content: systemPrompt },

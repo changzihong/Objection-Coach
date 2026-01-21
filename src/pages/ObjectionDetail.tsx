@@ -9,8 +9,11 @@ import ConfirmModal from '../components/ConfirmModal'
 import { jsPDF } from 'jspdf'
 import { ArrowLeft, Save, Trash2, FileText, Layout, MessageCircle, Play, CheckCircle2, Clock } from 'lucide-react'
 
-// Set worker source for PDF.js
-pdfjsLib.GlobalWorkerOptions.workerSrc = `//cdnjs.cloudflare.com/ajax/libs/pdf.js/${pdfjsLib.version}/pdf.worker.min.js`
+// Set worker source for PDF.js - use local worker from node_modules
+pdfjsLib.GlobalWorkerOptions.workerSrc = new URL(
+  'pdfjs-dist/build/pdf.worker.min.mjs',
+  import.meta.url
+).toString()
 import '../styles/layout.css'
 import '../styles/coach.css'
 
@@ -136,6 +139,7 @@ export default function ObjectionDetail() {
           formData.product_info || '',
           formData.name || '',
           formData.context_text || '',
+          formData.price || '',
           formData.type as 'purchase' | 'sell',
           updatedMessages
         )
@@ -145,6 +149,7 @@ export default function ObjectionDetail() {
             formData.product_info || '',
             formData.name || '',
             formData.context_text || '',
+            formData.price || '',
             updatedMessages.slice(-10)
           )
         } else {
@@ -152,6 +157,7 @@ export default function ObjectionDetail() {
             formData.product_info || '',
             formData.name || '',
             formData.context_text || '',
+            formData.price || '',
             updatedMessages.slice(-10)
           )
         }
@@ -247,6 +253,12 @@ export default function ObjectionDetail() {
 
   const handleSave = async (e: React.FormEvent) => {
     e.preventDefault()
+
+    if (!formData.context_text || formData.context_text.trim() === '') {
+      alert('Supporting documents are required. Please upload a PDF or TXT file.')
+      return
+    }
+
     setLoading(true)
     try {
       const { data: { session } } = await supabase.auth.getSession()
@@ -376,14 +388,21 @@ export default function ObjectionDetail() {
                 </div>
               </div>
               <div className="form-group">
-                <label className="form-label">Supporting Documents</label>
+                <label className="form-label">
+                  Supporting Documents <span style={{ color: '#c5a059' }}>*</span>
+                </label>
                 <div className="file-upload-wrapper">
                   <label className="file-upload-label">
                     <Layout size={24} style={{ marginBottom: '0.5rem', opacity: 0.5 }} />
-                    <span>{fileName ? `File: ${fileName}` : 'Upload PDF or TXT guides'}</span>
+                    <span>{fileName ? `File: ${fileName}` : 'Upload PDF or TXT guides (Required)'}</span>
                     <input type="file" className="file-upload-input" accept=".txt,.pdf" onChange={handleFileUpload} />
                   </label>
                 </div>
+                {formData.context_text && (
+                  <p style={{ fontSize: '0.85rem', color: '#4caf50', marginTop: '0.5rem' }}>
+                    Document uploaded successfully
+                  </p>
+                )}
               </div>
               <div className="form-group">
                 <label className="form-label">Product / Service Specifications</label>
